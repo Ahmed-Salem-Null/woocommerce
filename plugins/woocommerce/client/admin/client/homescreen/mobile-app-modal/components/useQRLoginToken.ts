@@ -82,35 +82,50 @@ export const useQRLoginToken = () => {
 			setState( QRLoginTokenStates.ERROR );
 
 			const err = error as { code?: string; message?: string };
-			if ( err.code === 'wpcom_account_required' ) {
-				setErrorMessage(
-					__(
-						'QR login is only available for WordPress.com connected accounts.',
-						'woocommerce'
-					)
-				);
-			} else if ( err.code === 'rate_limit_exceeded' ) {
-				setErrorMessage(
-					__(
-						'Too many requests. Please try again in a few minutes.',
-						'woocommerce'
-					)
-				);
-			} else if ( err.code === 'ssl_required' ) {
-				setErrorMessage(
-					__(
-						'QR login requires an HTTPS connection.',
-						'woocommerce'
-					)
-				);
-			} else {
-				setErrorMessage(
-					err.message ||
+			switch ( err.code ) {
+				case 'woocommerce_rest_cannot_view':
+					// The endpoint requires the `manage_woocommerce`
+					// capability — surface a clear, actionable message
+					// rather than the generic REST wording.
+					setErrorMessage(
 						__(
-							'Failed to generate QR login code. Please try again.',
+							'You do not have permission to generate a QR login code. Ask a site administrator for help.',
 							'woocommerce'
 						)
-				);
+					);
+					break;
+				case 'ssl_required':
+					setErrorMessage(
+						__(
+							'QR login requires an HTTPS connection.',
+							'woocommerce'
+						)
+					);
+					break;
+				case 'application_passwords_unavailable':
+					setErrorMessage(
+						__(
+							'Application passwords are disabled on this site, so QR login is unavailable. Ask a site administrator to enable them.',
+							'woocommerce'
+						)
+					);
+					break;
+				case 'rate_limit_exceeded':
+					setErrorMessage(
+						__(
+							'Too many QR login requests. Please try again in a few minutes.',
+							'woocommerce'
+						)
+					);
+					break;
+				default:
+					setErrorMessage(
+						err.message ||
+							__(
+								'Failed to generate QR login code. Please try again.',
+								'woocommerce'
+							)
+					);
 			}
 		}
 	}, [ startCountdown ] );
