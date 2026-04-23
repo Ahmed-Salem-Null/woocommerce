@@ -206,12 +206,15 @@
 }
 
 button.components-button.send-magic-link-button {
-	background: #007cba;
+	background: #7f54b3;
 	color: #fff;
 	position: relative;
 	margin-bottom: 1em;
-	:hover {
-		// the hover state makes the text invisible so we need to override it
+	transition: background-color 0.15s ease-in-out;
+
+	&:hover,
+	&:focus {
+		background: #674399;
 		color: #fff;
 	}
 
@@ -285,7 +288,7 @@ button.components-button.send-magic-link-button {
 		}
 		.email-sent-footer-text {
 			.email-sent-send-another-link {
-				color: #007cba;
+				color: #7f54b3;
 				text-decoration: none;
 				padding: 0;
 				cursor: pointer;
