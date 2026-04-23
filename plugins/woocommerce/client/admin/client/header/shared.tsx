@@ -16,7 +16,6 @@ import {
 /**
  * Internal dependencies
  */
-import { TasksReminderBar } from '../task-lists/reminder-bar';
 import useIsScrolled from '~/hooks/useIsScrolled';
 
 export const useUpdateBodyMargin = ( {
@@ -60,8 +59,6 @@ export const useUpdateBodyMargin = ( {
 			wpBody.style.marginTop = '';
 		};
 	}, [ headerItemSlot?.fills, updateBodyMargin ] );
-
-	return updateBodyMargin;
 };
 
 export const getPageTitle = ( sections: string[] ) => {
@@ -87,14 +84,12 @@ export const getPageTitle = ( sections: string[] ) => {
 export const BaseHeader = ( {
 	isEmbedded,
 	query,
-	showReminderBar,
 	sections,
 	children,
 	leftAlign = true,
 }: {
 	isEmbedded: boolean;
 	query: Record< string, string >;
-	showReminderBar: boolean;
 	sections: string[];
 	children?: React.ReactNode;
 	leftAlign?: boolean;
@@ -105,7 +100,7 @@ export const BaseHeader = ( {
 	const pageTitleSlot = useSlot( WC_HEADER_PAGE_TITLE_SLOT_NAME );
 	const hasPageTitleFills = Boolean( pageTitleSlot?.fills?.length );
 	const headerItemSlot = useSlot( WC_HEADER_SLOT_NAME );
-	const updateBodyMargin = useUpdateBodyMargin( {
+	useUpdateBodyMargin( {
 		headerElement,
 		headerItemSlot,
 	} );
@@ -117,12 +112,6 @@ export const BaseHeader = ( {
 			} ) }
 			ref={ headerElement }
 		>
-			{ showReminderBar && (
-				<TasksReminderBar
-					updateBodyMargin={ updateBodyMargin }
-					taskListId="setup"
-				/>
-			) }
 			<div className="woocommerce-layout__header-wrapper">
 				<WooHeaderNavigationItem.Slot
 					fillProps={ { isEmbedded, query } }
