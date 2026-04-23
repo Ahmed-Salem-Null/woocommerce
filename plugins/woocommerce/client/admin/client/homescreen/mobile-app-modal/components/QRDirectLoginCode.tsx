@@ -83,12 +83,6 @@ export const QRDirectLoginCode = () => {
 						formatTime( secondsRemaining )
 					) }
 				</p>
-				<p className="qr-direct-login__version-note">
-					{ __(
-						'The app version needs to be 15.7 or above to sign in with this link.',
-						'woocommerce'
-					) }
-				</p>
 				<div>
 					{ interpolateComponents( {
 						mixedString: __(
