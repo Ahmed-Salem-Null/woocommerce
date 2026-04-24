@@ -32,6 +32,8 @@ export const useQRLoginToken = () => {
 	const [ errorMessage, setErrorMessage ] = useState< string | null >( null );
 	const timerRef = useRef< ReturnType< typeof setInterval > | null >( null );
 	const expiresAtRef = useRef< number >( 0 );
+	const isMountedRef = useRef( true );
+	const requestIdRef = useRef( 0 );
 
 	const clearTimer = useCallback( () => {
 		if ( timerRef.current ) {
@@ -46,6 +48,10 @@ export const useQRLoginToken = () => {
 			expiresAtRef.current = expiresAt;
 
 			const updateRemaining = () => {
+				if ( ! isMountedRef.current ) {
+					return;
+				}
+
 				const remaining = Math.max(
 					0,
 					Math.floor( expiresAtRef.current - Date.now() / 1000 )
@@ -66,6 +72,13 @@ export const useQRLoginToken = () => {
 	);
 
 	const fetchToken = useCallback( async () => {
+		const requestId = requestIdRef.current + 1;
+		requestIdRef.current = requestId;
+
+		clearTimer();
+		expiresAtRef.current = 0;
+		setQrUrl( null );
+		setSecondsRemaining( 0 );
 		setState( QRLoginTokenStates.LOADING );
 		setErrorMessage( null );
 
@@ -75,10 +88,28 @@ export const useQRLoginToken = () => {
 				method: 'POST',
 			} );
 
+			if (
+				! isMountedRef.current ||
+				requestId !== requestIdRef.current
+			) {
+				return;
+			}
+
 			setQrUrl( response.qr_url );
 			setState( QRLoginTokenStates.READY );
 			startCountdown( response.expires_at );
 		} catch ( error: unknown ) {
+			if (
+				! isMountedRef.current ||
+				requestId !== requestIdRef.current
+			) {
+				return;
+			}
+
+			clearTimer();
+			expiresAtRef.current = 0;
+			setQrUrl( null );
+			setSecondsRemaining( 0 );
 			setState( QRLoginTokenStates.ERROR );
 
 			const err = error as { code?: string; message?: string };
@@ -128,11 +159,17 @@ export const useQRLoginToken = () => {
 					);
 			}
 		}
-	}, [ startCountdown ] );
+	}, [ clearTimer, startCountdown ] );
 
 	// Cleanup timer on unmount.
 	useEffect( () => {
-		return () => clearTimer();
+		isMountedRef.current = true;
+
+		return () => {
+			isMountedRef.current = false;
+			requestIdRef.current += 1;
+			clearTimer();
+		};
 	}, [ clearTimer ] );
 
 	return {
