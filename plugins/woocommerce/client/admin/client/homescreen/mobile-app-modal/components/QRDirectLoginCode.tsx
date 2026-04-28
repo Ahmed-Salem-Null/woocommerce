@@ -149,30 +149,34 @@ export const QRDirectLoginCode = ( {
 
 	if ( state === QRLoginTokenStates.READY && qrUrl ) {
 		return (
-			<div className="qr-direct-login">
-				<QRCodeSVG value={ qrUrl } size={ 140 } />
-				<p className="qr-direct-login__timer">
-					{ sprintf(
-						/* translators: %s: time remaining in M:SS format */
-						__( 'Code expires in %s', 'woocommerce' ),
-						formatTime( secondsRemaining )
-					) }
-				</p>
-				{ /*
-				   Persistent renew button — always visible while a code is on
-				   screen. Lets a merchant who tabbed away mint a fresh code
-				   without waiting for the 5-min countdown to finish.
-				*/ }
-				<Button
-					variant="link"
-					className="qr-direct-login__renew"
-					onClick={ () => {
-						recordEvent( 'mobile_app_qr_direct_login_renewed' );
-						refreshToken();
-					} }
-				>
-					{ __( 'Renew code', 'woocommerce' ) }
-				</Button>
+			<div className="qr-direct-login qr-direct-login--ready">
+				<div className="qr-direct-login__qr">
+					<QRCodeSVG value={ qrUrl } size={ 140 } />
+				</div>
+				<div className="qr-direct-login__meta">
+					<p className="qr-direct-login__timer">
+						{ sprintf(
+							/* translators: %s: time remaining in M:SS format */
+							__( 'Code expires in %s', 'woocommerce' ),
+							formatTime( secondsRemaining )
+						) }
+					</p>
+					{ /*
+					   Persistent renew button — always visible while a code is
+					   on screen. Lets a merchant who tabbed away mint a fresh
+					   code without waiting for the 5-min countdown to finish.
+					*/ }
+					<Button
+						variant="link"
+						className="qr-direct-login__renew"
+						onClick={ () => {
+							recordEvent( 'mobile_app_qr_direct_login_renewed' );
+							refreshToken();
+						} }
+					>
+						{ __( 'Renew code', 'woocommerce' ) }
+					</Button>
+				</div>
 			</div>
 		);
 	}
