@@ -11,15 +11,30 @@ import { recordEvent } from '@woocommerce/tracks';
  * Internal dependencies
  */
 import { useQRLoginToken, QRLoginTokenStates } from './useQRLoginToken';
+import { QRLoginConsumedPanel } from './QRLoginConsumedPanel';
+import { QRLoginRevokedPanel } from './QRLoginRevokedPanel';
 
-export const QRDirectLoginCode = () => {
+type QRDirectLoginCodeProps = {
+	/**
+	 * Optional callback invoked when the merchant clicks "Done" on the
+	 * consumed/revoked panels. Surfaces are free to no-op (e.g. the standalone
+	 * page) or close themselves (e.g. the homescreen modal).
+	 */
+	onDone?: () => void;
+};
+
+export const QRDirectLoginCode = ( {
+	onDone,
+}: QRDirectLoginCodeProps = {} ) => {
 	const {
 		state,
 		qrUrl,
 		secondsRemaining,
 		errorMessage,
+		deviceInfo,
 		fetchToken,
 		refreshToken,
+		revoke,
 	} = useQRLoginToken();
 
 	useEffect( () => {
@@ -70,6 +85,20 @@ export const QRDirectLoginCode = () => {
 		);
 	}
 
+	if ( state === QRLoginTokenStates.CONSUMED ) {
+		return (
+			<QRLoginConsumedPanel
+				deviceInfo={ deviceInfo }
+				onRevoke={ revoke }
+				onDone={ onDone }
+			/>
+		);
+	}
+
+	if ( state === QRLoginTokenStates.REVOKED ) {
+		return <QRLoginRevokedPanel onDone={ onDone } />;
+	}
+
 	if ( state === QRLoginTokenStates.READY && qrUrl ) {
 		return (
 			<div className="qr-direct-login">
@@ -81,6 +110,21 @@ export const QRDirectLoginCode = () => {
 						formatTime( secondsRemaining )
 					) }
 				</p>
+				{ /*
+				   Persistent renew button — always visible while a code is on
+				   screen. Lets a merchant who tabbed away mint a fresh code
+				   without waiting for the 5-min countdown to finish.
+				*/ }
+				<Button
+					variant="link"
+					className="qr-direct-login__renew"
+					onClick={ () => {
+						recordEvent( 'mobile_app_qr_direct_login_renewed' );
+						refreshToken();
+					} }
+				>
+					{ __( 'Renew code', 'woocommerce' ) }
+				</Button>
 			</div>
 		);
 	}
