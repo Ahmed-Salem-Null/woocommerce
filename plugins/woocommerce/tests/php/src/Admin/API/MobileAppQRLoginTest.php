@@ -757,9 +757,10 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 		$response = $this->dispatch_exchange(
 			$plaintext,
 			array(
-				'os'          => 'iOS',
-				'os_version'  => '17.5',
-				'model'       => 'iPhone 15',
+				'os'          => 'Android',
+				'os_version'  => '14',
+				'model'       => 'Pixel 8 Pro',
+				'brand'       => 'google',
 				'app_version' => '24.7.0',
 			)
 		);
@@ -776,9 +777,10 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 		$this->assertSame( $response->get_data()['uuid'], $consumed['ap_uuid'] );
 		$this->assertSame(
 			array(
-				'os'          => 'iOS',
-				'os_version'  => '17.5',
-				'model'       => 'iPhone 15',
+				'os'          => 'Android',
+				'os_version'  => '14',
+				'model'       => 'Pixel 8 Pro',
+				'brand'       => 'google',
 				'app_version' => '24.7.0',
 			),
 			$consumed['device']
