@@ -18,31 +18,23 @@ type QRLoginConsumedPanelProps = {
 };
 
 /**
- * Build the headline shown after a successful sign-in. Prefers the device
- * model when the mobile app sent one; falls back to the OS, then to a
- * device-agnostic line for older mobile clients that don't yet send a
- * `device` payload.
+ * Build the headline shown after a successful sign-in. The server-side
+ * `/qr-login-scan` requires a device payload, so by the time we render
+ * we always have at least an OS label. Prefer model when present.
+ *
+ * The leading null guard exists for the brief render between the consumed
+ * status arriving and React state catching up — not as protocol compat.
  */
 const buildHeadline = ( device: QRLoginDeviceInfo | null ): string => {
-	const model = device?.model?.trim();
-	if ( model ) {
-		return sprintf(
-			/* translators: %s: device model, e.g. "iPhone 15". */
-			__( 'Signed in successfully on %s', 'woocommerce' ),
-			model
-		);
+	const descriptor = device?.model?.trim() || device?.os?.trim() || '';
+	if ( ! descriptor ) {
+		return __( 'Signed in successfully', 'woocommerce' );
 	}
-
-	const os = device?.os?.trim();
-	if ( os ) {
-		return sprintf(
-			/* translators: %s: OS name, e.g. "iOS" or "Android". */
-			__( 'Signed in successfully on %s', 'woocommerce' ),
-			os
-		);
-	}
-
-	return __( 'Signed in successfully', 'woocommerce' );
+	return sprintf(
+		/* translators: %s: device model or OS, e.g. "iPhone 15" or "Android". */
+		__( 'Signed in successfully on %s', 'woocommerce' ),
+		descriptor
+	);
 };
 
 /**
