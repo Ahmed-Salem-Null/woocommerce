@@ -251,7 +251,33 @@ export const useQRLoginToken = () => {
 			setSecondsRemaining( 0 );
 			setState( QRLoginTokenStates.ERROR );
 
-			const err = error as { code?: string; message?: string };
+			const err = error as {
+				code?: string;
+				message?: string;
+				data?: { status?: number };
+			};
+
+			// Edge rate-limiters (Cloudflare, VIP, etc.) return an HTML 429
+			// page — apiFetch surfaces that as `invalid_json`. We treat any
+			// of: our own `rate_limit_exceeded` code, an HTTP 429, or an
+			// `invalid_json` parse failure as the same merchant-facing
+			// "you're sending too many requests, wait a moment" state.
+			const httpStatus = err.data?.status;
+			const isRateLimited =
+				err.code === 'rate_limit_exceeded' ||
+				err.code === 'invalid_json' ||
+				httpStatus === 429;
+
+			if ( isRateLimited ) {
+				setErrorMessage(
+					__(
+						"You've requested QR login codes too quickly. Please wait a moment and try again.",
+						'woocommerce'
+					)
+				);
+				return;
+			}
+
 			switch ( err.code ) {
 				case 'woocommerce_rest_cannot_view':
 					// The endpoint requires the `manage_woocommerce`
@@ -276,14 +302,6 @@ export const useQRLoginToken = () => {
 					setErrorMessage(
 						__(
 							'Application passwords are disabled on this site, so QR login is unavailable. Ask a site administrator to enable them.',
-							'woocommerce'
-						)
-					);
-					break;
-				case 'rate_limit_exceeded':
-					setErrorMessage(
-						__(
-							'Too many QR login requests. Please try again in a few minutes.',
 							'woocommerce'
 						)
 					);
