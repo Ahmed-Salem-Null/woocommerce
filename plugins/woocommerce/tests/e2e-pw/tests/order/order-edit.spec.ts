@@ -209,7 +209,7 @@ test.describe( 'Edit order', { tag: [ tags.SERVICES, tags.HPOS ] }, () => {
 			.fill(
 				'This order is a test order. It is only a test. This note is a private note.'
 			);
-		await page.getByRole( 'button', { name: 'Add', exact: true } ).click();
+		await page.getByRole( 'button', { name: 'Add private note' } ).click();
 
 		// verify the note saved
 		await expect(
@@ -220,7 +220,7 @@ test.describe( 'Edit order', { tag: [ tags.SERVICES, tags.HPOS ] }, () => {
 
 		// delete the note
 		await page
-			.getByRole( 'button', { name: 'Delete note' } )
+			.getByRole( 'button', { name: 'Delete', exact: true } )
 			.first()
 			.click();
 
@@ -238,8 +238,12 @@ test.describe( 'Edit order', { tag: [ tags.SERVICES, tags.HPOS ] }, () => {
 			.fill(
 				'This order is a test order. It is only a test. This note is a note to the customer.'
 			);
-		await page.getByLabel( 'Note type' ).selectOption( 'Note to customer' );
-		await page.getByRole( 'button', { name: 'Add', exact: true } ).click();
+		await page
+			.getByLabel( 'Visibility' )
+			.selectOption( 'Public note to customer' );
+		await page
+			.getByRole( 'button', { name: 'Send note to customer' } )
+			.click();
 
 		// verify the note saved
 		await expect(
@@ -250,14 +254,14 @@ test.describe( 'Edit order', { tag: [ tags.SERVICES, tags.HPOS ] }, () => {
 
 		// delete the note
 		await page
-			.getByRole( 'button', { name: 'Delete note' } )
+			.getByRole( 'button', { name: 'Delete', exact: true } )
 			.first()
 			.click();
 
 		// verify the note is gone
 		await expect(
 			page.getByText(
-				'This order is a test order. It is only a test. This note is a private note.'
+				'This order is a test order. It is only a test. This note is a note to the customer.'
 			)
 		).toBeHidden();
 	} );
