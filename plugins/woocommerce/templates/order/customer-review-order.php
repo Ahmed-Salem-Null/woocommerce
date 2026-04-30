@@ -3,8 +3,8 @@
  * Customer Review Order page
  *
  * Read-only landing page surfaced from the Customer Review Request email. The
- * page lists the eligible line items from a completed order so the customer
- * can review what they purchased. The form controls themselves land in M4.
+ * page wraps every reviewable line item in a single form. The submission
+ * handler that consumes the form lives in M4 (WOOPLUG-6596).
  *
  * This template can be overridden by copying it to yourtheme/woocommerce/order/customer-review-order.php.
  *
@@ -68,6 +68,12 @@ $meta_parts = array_filter(
  * @param WC_Order        $order The order being reviewed.
  */
 $items = apply_filters( 'woocommerce_review_order_eligible_items', $order->get_items(), $order );
+
+// Read the order key from the URL so the form can echo it back when posted.
+// The Endpoint handler has already validated it before this template runs.
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only landing page; the order key is the auth.
+$raw_key   = ( isset( $_GET['key'] ) && is_string( $_GET['key'] ) ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+$order_key = is_string( $raw_key ) ? $raw_key : '';
 ?>
 <div class="woocommerce-review-order">
 	<p class="woocommerce-review-order__meta">
@@ -87,60 +93,52 @@ $items = apply_filters( 'woocommerce_review_order_eligible_items', $order->get_i
 	</p>
 
 	<?php if ( ! empty( $items ) ) : ?>
-		<ul class="woocommerce-review-order__items">
-			<?php foreach ( $items as $item ) : ?>
+		<form
+			class="woocommerce-review-order__form"
+			method="post"
+			action=""
+			novalidate
+		>
+			<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order->get_id() ); ?>" />
+			<input type="hidden" name="key" value="<?php echo esc_attr( $order_key ); ?>" />
+			<?php wp_nonce_field( 'woocommerce_submit_order_reviews', '_wcnonce' ); ?>
+
+			<ul class="woocommerce-review-order__items">
 				<?php
-				if ( ! $item instanceof WC_Order_Item_Product ) {
-					continue;
-				}
-				$product = $item->get_product();
-				if ( ! $product instanceof WC_Product ) {
-					continue;
-				}
-				$product_link = $product->is_visible() ? get_permalink( $product->get_id() ) : '';
-				$product_name = $item->get_name();
-				$image_html   = $product->get_image( 'woocommerce_thumbnail' );
+				$row_index = 0;
+				foreach ( $items as $item ) {
+					if ( ! $item instanceof WC_Order_Item_Product ) {
+						continue;
+					}
+					$product = $item->get_product();
+					if ( ! $product instanceof WC_Product ) {
+						continue;
+					}
+
+					wc_get_template(
+						'order/customer-review-order-row.php',
+						array(
+							'item'      => $item,
+							'product'   => $product,
+							'order'     => $order,
+							'row_index' => $row_index,
+						)
+					);
+
+					++$row_index;
+				}//end foreach
 				?>
-				<?php
-				$rating_label_id = 'woocommerce-review-rating-label-' . $item->get_id();
-				$rating_control  = \Automattic\WooCommerce\Internal\OrderReviews\StarRating::render(
-					array(
-						'name'      => 'reviews[' . $item->get_id() . '][rating]',
-						'id_prefix' => 'woocommerce-review-rating-' . $item->get_id(),
-						'label_id'  => $rating_label_id,
-					)
-				);
-				?>
-				<li class="woocommerce-review-order__item">
-					<p class="woocommerce-review-order__item-title">
-						<?php if ( $product_link ) : ?>
-							<a href="<?php echo esc_url( $product_link ); ?>"><?php echo esc_html( $product_name ); ?></a>
-						<?php else : ?>
-							<?php echo esc_html( $product_name ); ?>
-						<?php endif; ?>
-					</p>
-					<div class="woocommerce-review-order__item-row">
-						<div class="woocommerce-review-order__item-image">
-							<?php echo $image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_image() returns escaped HTML. ?>
-						</div>
-						<div class="woocommerce-review-order__item-form-placeholder">
-							<p id="<?php echo esc_attr( $rating_label_id ); ?>" class="woocommerce-review-order__item-rating-label">
-								<?php
-								printf(
-									'%1$s <span class="required" aria-hidden="true">*</span><span class="screen-reader-text"> %2$s</span>',
-									esc_html__( 'Your rating', 'woocommerce' ),
-									esc_html__( 'Required', 'woocommerce' )
-								);
-								?>
-							</p>
-							<?php echo $rating_control; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- StarRating::render() returns escaped HTML. ?>
-							<p class="woocommerce-review-order__item-form-note">
-								<?php esc_html_e( 'Review textarea and submit land in M4.', 'woocommerce' ); ?>
-							</p>
-						</div>
-					</div>
-				</li>
-			<?php endforeach; ?>
-		</ul>
+			</ul>
+
+			<div class="woocommerce-review-order__actions">
+				<button
+					type="submit"
+					class="woocommerce-review-order__submit button"
+					disabled
+				>
+					<?php esc_html_e( 'Submit reviews', 'woocommerce' ); ?>
+				</button>
+			</div>
+		</form>
 	<?php endif; ?>
 </div>
