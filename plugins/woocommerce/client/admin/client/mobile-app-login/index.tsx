@@ -12,6 +12,7 @@ import { recordEvent } from '@woocommerce/tracks';
  * Internal dependencies
  */
 import { QRDirectLoginCode } from '~/homescreen/mobile-app-modal/components/QRDirectLoginCode';
+import WooLogo from '~/core-profiler/components/navigation/woologo';
 import './style.scss';
 
 /**
@@ -46,15 +47,15 @@ export const MobileAppLoginPage = () => {
 			<Card className="woocommerce-mobile-app-login__card">
 				<CardBody className="woocommerce-mobile-app-login__body">
 					{ /*
-					 * Branded mark at the top of the card. The same purple
-					 * gradient is used in the homescreen modal so a merchant
-					 * landing on either surface gets the same visual cue.
+					 * Real Woo wordmark — same SVG used by the core-profiler
+					 * onboarding nav. Keeps the standalone page on-brand and
+					 * consistent with the rest of wc-admin.
 					 */ }
 					<div
-						className="woocommerce-mobile-app-login__brand"
+						className="woocommerce-mobile-app-login__logo"
 						aria-hidden="true"
 					>
-						W
+						<WooLogo />
 					</div>
 					<h1 className="woocommerce-mobile-app-login__heading">
 						{ __( 'Sign in to the Woo mobile app', 'woocommerce' ) }
@@ -85,7 +86,7 @@ export const MobileAppLoginPage = () => {
 					<p className="woocommerce-mobile-app-login__faq">
 						{ interpolateComponents( {
 							mixedString: __(
-								'Having trouble? Check our {{link}}troubleshooting guide{{/link}}.',
+								'Any troubles signing in? Check out the {{link}}FAQ{{/link}}.',
 								'woocommerce'
 							),
 							components: {
