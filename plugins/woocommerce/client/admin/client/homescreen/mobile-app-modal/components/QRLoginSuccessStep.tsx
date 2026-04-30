@@ -3,107 +3,37 @@
  */
 import React, { useState } from '@wordpress/element';
 import { Button, Modal } from '@wordpress/components';
-import { sprintf, __ } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import { recordEvent } from '@woocommerce/tracks';
 
 /**
  * Internal dependencies
  */
-import type { QRLoginDeviceInfo } from './useQRLoginToken';
 import { useRevokeQRLoginAccess } from './useRevokeQRLoginAccess';
 
 type QRLoginSuccessStepProps = {
-	deviceInfo: QRLoginDeviceInfo | null;
 	apUuid: string | null;
 };
 
 /**
- * Build the headline shown after a successful sign-in. Prefers the device
- * model when the mobile app sent one; falls back to the OS, then to a
- * device-agnostic line for older mobile clients that don't send a device
- * payload.
- */
-const buildHeadline = ( device: QRLoginDeviceInfo | null ): string => {
-	const model = device?.model?.trim();
-	if ( model ) {
-		return sprintf(
-			/* translators: %s: device model, e.g. "iPhone 15". */
-			__( 'Signed in successfully on %s', 'woocommerce' ),
-			model
-		);
-	}
-
-	const os = device?.os?.trim();
-	if ( os ) {
-		return sprintf(
-			/* translators: %s: OS name, e.g. "iOS" or "Android". */
-			__( 'Signed in successfully on %s', 'woocommerce' ),
-			os
-		);
-	}
-
-	return __( 'Signed in successfully', 'woocommerce' );
-};
-
-/**
- * Build a single-line subline summarising the device the merchant signed in
- * with. Skips any field the mobile app didn't send so older clients don't
- * render `· undefined` artifacts.
- *
- * The model (and brand) deliberately do NOT appear here — they're already
- * shown in the headline above ("Signed in successfully on {model}"), and
- * the user feedback was clear that we should not duplicate that fact in
- * the subline.
- */
-const buildSubline = ( device: QRLoginDeviceInfo | null ): string => {
-	if ( ! device ) {
-		return '';
-	}
-
-	const parts: string[] = [];
-
-	if ( device.os ) {
-		parts.push(
-			device.os_version
-				? `${ device.os } ${ device.os_version }`
-				: device.os
-		);
-	}
-
-	if ( device.app_version ) {
-		parts.push(
-			sprintf(
-				/* translators: %s: mobile app version, e.g. "24.7.0". */
-				__( 'App version %s', 'woocommerce' ),
-				device.app_version
-			)
-		);
-	}
-
-	return parts.join( ' · ' );
-};
-
-/**
  * Step 3 of the modal flow — shown after the mobile app exchanges the QR
- * token for an Application Password. Mirrors the visual hierarchy of step 1
- * and step 2 (large heading + supporting copy + primary CTA) so the third
- * step feels like a natural progression rather than a side panel.
+ * token for an Application Password.
+ *
+ * Doesn't repeat the device info — the stepper label already says "Signed
+ * in successfully" and the prior step (number-match) already showed the
+ * device. The single piece of inline content is the "It wasn't you? Revoke
+ * access" pair, which sits on one row to make better use of the vertical
+ * space the stepper already consumes.
  *
  * The "Revoke access" CTA opens a confirmation modal before issuing the
  * DELETE call — a stray click should not silently sign the merchant out of
  * their own phone.
  */
-export const QRLoginSuccessStep = ( {
-	deviceInfo,
-	apUuid,
-}: QRLoginSuccessStepProps ) => {
+export const QRLoginSuccessStep = ( { apUuid }: QRLoginSuccessStepProps ) => {
 	const [ isConfirmingRevoke, setIsConfirmingRevoke ] =
 		useState< boolean >( false );
 	const { revoke, isRevoking, isRevoked, errorMessage } =
 		useRevokeQRLoginAccess();
-
-	const headline = buildHeadline( deviceInfo );
-	const subline = buildSubline( deviceInfo );
 
 	const openConfirmDialog = () => {
 		recordEvent( 'mobile_app_qr_direct_login_revoke_intent' );
@@ -152,24 +82,19 @@ export const QRLoginSuccessStep = ( {
 				role="status"
 				aria-live="polite"
 			>
-				<h2 className="qr-login-success-step__heading">{ headline }</h2>
-
-				{ subline && (
-					<p className="qr-login-success-step__device">{ subline }</p>
-				) }
-
-				<p className="qr-login-success-step__challenge">
-					{ __( "It wasn't you?", 'woocommerce' ) }
-				</p>
-
-				<Button
-					variant="primary"
-					className="qr-login-success-step__revoke-button"
-					onClick={ openConfirmDialog }
-					disabled={ ! apUuid }
-				>
-					{ __( 'Revoke access', 'woocommerce' ) }
-				</Button>
+				<div className="qr-login-success-step__revoke-row">
+					<p className="qr-login-success-step__challenge">
+						{ __( "It wasn't you?", 'woocommerce' ) }
+					</p>
+					<Button
+						variant="primary"
+						className="qr-login-success-step__revoke-button"
+						onClick={ openConfirmDialog }
+						disabled={ ! apUuid }
+					>
+						{ __( 'Revoke access', 'woocommerce' ) }
+					</Button>
+				</div>
 
 				{ errorMessage && (
 					<p className="qr-login-success-step__error" role="alert">
