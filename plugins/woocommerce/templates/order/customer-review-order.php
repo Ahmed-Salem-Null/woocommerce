@@ -101,6 +101,16 @@ $items = apply_filters( 'woocommerce_review_order_eligible_items', $order->get_i
 				$product_name = $item->get_name();
 				$image_html   = $product->get_image( 'woocommerce_thumbnail' );
 				?>
+				<?php
+				$rating_label_id = 'woocommerce-review-rating-label-' . $item->get_id();
+				$rating_control  = \Automattic\WooCommerce\Internal\OrderReviews\StarRating::render(
+					array(
+						'name'      => 'reviews[' . $item->get_id() . '][rating]',
+						'id_prefix' => 'woocommerce-review-rating-' . $item->get_id(),
+						'label_id'  => $rating_label_id,
+					)
+				);
+				?>
 				<li class="woocommerce-review-order__item">
 					<p class="woocommerce-review-order__item-title">
 						<?php if ( $product_link ) : ?>
@@ -114,7 +124,18 @@ $items = apply_filters( 'woocommerce_review_order_eligible_items', $order->get_i
 							<?php echo $image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_image() returns escaped HTML. ?>
 						</div>
 						<div class="woocommerce-review-order__item-form-placeholder">
-							<?php esc_html_e( 'Review form coming soon.', 'woocommerce' ); ?>
+							<p id="<?php echo esc_attr( $rating_label_id ); ?>" class="woocommerce-review-order__item-rating-label">
+								<?php
+								printf(
+									'%s <span class="required" aria-hidden="true">*</span>',
+									esc_html__( 'Your rating', 'woocommerce' )
+								);
+								?>
+							</p>
+							<?php echo $rating_control; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- StarRating::render() returns escaped HTML. ?>
+							<p class="woocommerce-review-order__item-form-note">
+								<?php esc_html_e( 'Review textarea and submit land in M4.', 'woocommerce' ); ?>
+							</p>
 						</div>
 					</div>
 				</li>
