@@ -104,12 +104,12 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 	 * by an explicit `current_state` check at the top of each handler
 	 * (scan/approve/exchange) so the only writers are the handlers themselves.
 	 */
-	const STATE_PENDING   = 'pending';
-	const STATE_SCANNED   = 'scanned';
-	const STATE_APPROVED  = 'approved';
-	const STATE_REJECTED  = 'rejected';
-	const STATE_EXPIRED   = 'expired';
-	const STATE_CONSUMED  = 'consumed';
+	const STATE_PENDING  = 'pending';
+	const STATE_SCANNED  = 'scanned';
+	const STATE_APPROVED = 'approved';
+	const STATE_REJECTED = 'rejected';
+	const STATE_EXPIRED  = 'expired';
+	const STATE_CONSUMED = 'consumed';
 
 	/**
 	 * Pick window after the app scans a QR (seconds). The merchant has this
@@ -136,11 +136,21 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 	const SESSION_TRANSIENT_PREFIX = '_wc_qr_login_session_';
 
 	/**
-	 * Rate limits for the new Task-7 endpoints.
+	 * Rate limit for /qr-login-scan (per IP per 15 min).
 	 */
-	const MAX_SCAN_PER_WINDOW            = 10;   // per IP per 15 min.
-	const MAX_APPROVE_PER_WINDOW         = 20;   // per user per 15 min.
-	const MAX_SESSION_STATUS_PER_WINDOW  = 60;   // per session id per 15 min — accounts for ~2-s polling × 90 s.
+	const MAX_SCAN_PER_WINDOW = 10;
+
+	/**
+	 * Rate limit for /qr-login-approve (per user per 15 min).
+	 */
+	const MAX_APPROVE_PER_WINDOW = 20;
+
+	/**
+	 * Rate limit for /qr-login-session-status (per session id per 15 min).
+	 *
+	 * Accounts for ~2-s polling over a 90-s challenge window plus headroom.
+	 */
+	const MAX_SESSION_STATUS_PER_WINDOW = 60;
 
 	/**
 	 * Register routes.
@@ -694,7 +704,7 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 		$device_source = isset( $token_data['challenge']['device'] ) && is_array( $token_data['challenge']['device'] )
 			? $token_data['challenge']['device']
 			: array();
-		$device = $this->sanitize_device_payload( $device_source );
+		$device        = $this->sanitize_device_payload( $device_source );
 
 		// Create an Application Password for the mobile app. The name is
 		// descriptive (e.g. "Woo Mobile · iPhone 15 · 2026-04-28") so the user
@@ -834,9 +844,9 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 
 			return rest_ensure_response(
 				array(
-					'status'  => self::STATE_SCANNED,
-					'numbers' => $numbers,
-					'device'  => isset( $challenge['device'] ) && is_array( $challenge['device'] ) ? $challenge['device'] : array(),
+					'status'     => self::STATE_SCANNED,
+					'numbers'    => $numbers,
+					'device'     => isset( $challenge['device'] ) && is_array( $challenge['device'] ) ? $challenge['device'] : array(),
 					'expires_at' => isset( $challenge['expires_at'] ) ? (int) $challenge['expires_at'] : null,
 				)
 			);
@@ -1216,10 +1226,10 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 			wc_get_logger()->warning(
 				'QR login number-match rejected — wrong choice submitted',
 				array(
-					'source'   => 'qr-login-security',
-					'user_id'  => (int) $user_id,
-					'ip'       => $this->get_client_ip(),
-					'device'   => isset( $record['challenge']['device'] ) ? $record['challenge']['device'] : array(),
+					'source'  => 'qr-login-security',
+					'user_id' => (int) $user_id,
+					'ip'      => $this->get_client_ip(),
+					'device'  => isset( $record['challenge']['device'] ) ? $record['challenge']['device'] : array(),
 				)
 			);
 
@@ -1304,8 +1314,9 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 
 		// At most a few iterations needed in practice; cap defensively in
 		// case a freak rng run keeps colliding.
-		$attempts = 0;
-		while ( count( $distractors ) < 2 && $attempts < 100 ) {
+		$attempts         = 0;
+		$distractor_count = 0;
+		while ( $distractor_count < 2 && $attempts < 100 ) {
 			++$attempts;
 			$candidate = random_int( 0, 999 );
 			if ( $candidate === $real ) {
@@ -1314,10 +1325,11 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 			if ( abs( $candidate - $real ) < 100 ) {
 				continue;
 			}
-			if ( ! empty( $distractors ) && abs( $candidate - $distractors[0] ) < 100 ) {
+			if ( $distractor_count > 0 && abs( $candidate - $distractors[0] ) < 100 ) {
 				continue;
 			}
 			$distractors[] = $candidate;
+			++$distractor_count;
 		}
 
 		return array(
@@ -1421,8 +1433,8 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 	 * response on email delivery; the merchant already saw the confirmation
 	 * UI in wc-admin (Task 5).
 	 *
-	 * @param \WP_User                                                                   $user            The user who minted the token (recipient).
-	 * @param array{consumed_at: int, user_id: int, ap_uuid: string, ap_name: string, device: array<string, string>} $consumed_record The record we just persisted to the consumed transient.
+	 * @param \WP_User $user            The user who minted the token (recipient).
+	 * @param array    $consumed_record The record persisted to the consumed transient (keys: consumed_at, user_id, ap_uuid, ap_name, device).
 	 * @return void
 	 */
 	private function maybe_send_sign_in_notification_email( \WP_User $user, array $consumed_record ): void {
@@ -1434,9 +1446,9 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 		 *
 		 * @since 10.9.0
 		 *
-		 * @param bool                                                                       $should_send     Whether to send the email.
-		 * @param \WP_User                                                                   $user            The user who minted the QR token.
-		 * @param array{consumed_at: int, user_id: int, ap_uuid: string, ap_name: string, device: array<string, string>} $consumed_record The consumed record about to be emailed.
+		 * @param bool     $should_send     Whether to send the email.
+		 * @param \WP_User $user            The user who minted the QR token.
+		 * @param array    $consumed_record The consumed record about to be emailed (keys: consumed_at, user_id, ap_uuid, ap_name, device).
 		 */
 		$should_send = (bool) apply_filters(
 			'woocommerce_qr_login_should_send_signin_email',
@@ -1467,8 +1479,8 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 	 * and constrains the body width. Owning the wrapper lets us deliver one
 	 * coherent layout.
 	 *
-	 * @param \WP_User                                                                                                  $user            Recipient.
-	 * @param array{consumed_at: int, user_id: int, ap_uuid: string, ap_name: string, device: array<string, string>} $consumed_record The consumed record.
+	 * @param \WP_User $user            Recipient.
+	 * @param array    $consumed_record The consumed record (keys: consumed_at, user_id, ap_uuid, ap_name, device).
 	 * @return void
 	 */
 	private function send_sign_in_notification_email( \WP_User $user, array $consumed_record ): void {
@@ -1493,10 +1505,10 @@ class MobileAppQRLogin extends \WC_REST_Data_Controller {
 	/**
 	 * Render the full HTML email document for the sign-in notification.
 	 *
-	 * @param \WP_User                                                                                                  $user            Recipient.
-	 * @param array{consumed_at: int, user_id: int, ap_uuid: string, ap_name: string, device: array<string, string>} $consumed_record The consumed record.
-	 * @param string                                                                                                    $site_name       Decoded site name (passed in to avoid double-decoding).
-	 * @param string                                                                                                    $subject         Email subject; rendered as the in-body heading.
+	 * @param \WP_User $user            Recipient.
+	 * @param array    $consumed_record The consumed record (keys: consumed_at, user_id, ap_uuid, ap_name, device).
+	 * @param string   $site_name       Decoded site name (passed in to avoid double-decoding).
+	 * @param string   $subject         Email subject; rendered as the in-body heading.
 	 * @return string Rendered HTML document.
 	 */
 	private function render_sign_in_notification_email_body( \WP_User $user, array $consumed_record, string $site_name, string $subject ): string {

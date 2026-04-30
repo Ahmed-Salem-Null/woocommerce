@@ -967,13 +967,17 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 	 */
 	public function test_exchange_token_sanitizes_device_fields(): void {
 		$long = str_repeat( 'A', 100 );
+
+		// Each value asserts a different sanitization invariant: tags stripped
+		// by sanitize_text_field, length capped at 64, and unknown keys
+		// dropped (whitelist enforcement).
 		$prep = $this->prepare_exchange_token(
 			array(
-				'os'          => 'iOS<script>',         // tags stripped by sanitize_text_field.
+				'os'          => 'iOS<script>',
 				'os_version'  => '17.5',
-				'model'       => $long,                  // capped at 64.
+				'model'       => $long,
 				'app_version' => '24.7.0',
-				'rogue_field' => 'should-be-dropped',    // not in whitelist.
+				'rogue_field' => 'should-be-dropped',
 			)
 		);
 
@@ -1056,7 +1060,12 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 	 */
 	public function test_get_status_rejects_other_users(): void {
 		// Admin mints + exchanges the token.
-		$prep = $this->prepare_exchange_token( array( 'os' => 'iOS', 'model' => 'iPhone 15' ) );
+		$prep = $this->prepare_exchange_token(
+			array(
+				'os'    => 'iOS',
+				'model' => 'iPhone 15',
+			)
+		);
 		$this->dispatch_exchange( $prep['plaintext'], $prep['exchange_grant'] );
 
 		// A different shop manager polls the same token. Token guess is
@@ -1087,7 +1096,12 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 	 * @testdox Revoke endpoint deletes the Application Password issued by a successful exchange.
 	 */
 	public function test_revoke_password_happy_path(): void {
-		$prep     = $this->prepare_exchange_token( array( 'os' => 'iOS', 'model' => 'iPhone 15' ) );
+		$prep     = $this->prepare_exchange_token(
+			array(
+				'os'    => 'iOS',
+				'model' => 'iPhone 15',
+			)
+		);
 		$exchange = $this->dispatch_exchange( $prep['plaintext'], $prep['exchange_grant'] );
 		$this->assertSame( 200, $exchange->get_status() );
 		$uuid = $exchange->get_data()['uuid'];
@@ -1112,7 +1126,12 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 	 */
 	public function test_revoke_password_rejects_when_uuid_belongs_to_another_user(): void {
 		// Admin mints + exchanges. AP belongs to admin.
-		$prep     = $this->prepare_exchange_token( array( 'os' => 'iOS', 'model' => 'iPhone 15' ) );
+		$prep     = $this->prepare_exchange_token(
+			array(
+				'os'    => 'iOS',
+				'model' => 'iPhone 15',
+			)
+		);
 		$exchange = $this->dispatch_exchange( $prep['plaintext'], $prep['exchange_grant'] );
 		$uuid     = $exchange->get_data()['uuid'];
 
@@ -1156,8 +1175,8 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 	private function capture_wp_mail(): array {
 		$captures = array();
 
-		$capture = static function ( $return, $atts ) use ( &$captures ) {
-			unset( $return );
+		$capture = static function ( $short_circuit, $atts ) use ( &$captures ) {
+			unset( $short_circuit );
 			$captures[] = is_array( $atts ) ? $atts : array();
 			return true;
 		};
@@ -1212,19 +1231,24 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 			$this->assertStringContainsString( 'application-passwords', $body, 'Email body should link to the AP management screen.' );
 		} finally {
 			$capture['remove']();
-		}
+		}//end try
 	}
 
 	/**
 	 * @testdox The sign-in notification email can be suppressed via the woocommerce_qr_login_should_send_signin_email filter.
 	 */
 	public function test_sign_in_notification_email_can_be_suppressed_via_filter(): void {
-		$capture   = $this->capture_wp_mail();
-		$suppress  = static fn () => false;
+		$capture  = $this->capture_wp_mail();
+		$suppress = static fn () => false;
 		add_filter( 'woocommerce_qr_login_should_send_signin_email', $suppress );
 
 		try {
-			$prep     = $this->prepare_exchange_token( array( 'os' => 'iOS', 'model' => 'iPhone 15' ) );
+			$prep     = $this->prepare_exchange_token(
+				array(
+					'os'    => 'iOS',
+					'model' => 'iPhone 15',
+				)
+			);
 			$response = $this->dispatch_exchange( $prep['plaintext'], $prep['exchange_grant'] );
 			$this->assertSame( 200, $response->get_status() );
 
@@ -1236,7 +1260,7 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 		} finally {
 			remove_filter( 'woocommerce_qr_login_should_send_signin_email', $suppress );
 			$capture['remove']();
-		}
+		}//end try
 	}
 
 
@@ -1253,7 +1277,11 @@ class MobileAppQRLoginTest extends WC_REST_Unit_Test_Case {
 
 		$response = $this->dispatch_scan(
 			$plaintext,
-			array( 'os' => 'Android', 'model' => 'Pixel 10', 'app_version' => '24.7.0' )
+			array(
+				'os'          => 'Android',
+				'model'       => 'Pixel 10',
+				'app_version' => '24.7.0',
+			)
 		);
 
 		$this->assertSame( 200, $response->get_status() );
