@@ -1,11 +1,53 @@
 /**
  * Review Order page styles.
  *
- * The design-token / responsive pass (WOOPLUG-6597) is the dedicated polish
- * issue and will tighten these styles further.
+ * Figma source of truth: node 58:647 in
+ * https://www.figma.com/design/03gyC2MaBJcvvXJozmxbcs/Review-request-email
+ *
+ * Tokens are defined locally on the page wrapper rather than promoted to the
+ * shared `_variables.scss` because they are scoped to this feature.
  */
 
 .woocommerce-review-order {
+	// Figma tokens, scoped.
+	--wc-review-order-brand: #3858e9;
+	--wc-review-order-fg: #1e1e1e;
+	--wc-review-order-fg-muted: #4d4d4d;
+	--wc-review-order-fg-subtle: #6d6d6d;
+	--wc-review-order-stroke: #898989;
+	--wc-review-order-radius: 2px;
+
+	// Type scale.
+	--wc-review-order-fs-h1: 32px;
+	--wc-review-order-fs-h2: 20px;
+	--wc-review-order-fs-body: 15px;
+	--wc-review-order-fs-input: 13px;
+	--wc-review-order-fs-meta: 12px;
+
+	color: var( --wc-review-order-fg );
+	font-size: var( --wc-review-order-fs-body );
+	line-height: 1.5;
+
+	&__meta {
+		font-size: var( --wc-review-order-fs-meta );
+		color: var( --wc-review-order-fg-muted );
+	}
+
+	&__title {
+		font-size: var( --wc-review-order-fs-h1 );
+		line-height: 1.25;
+		margin: 0 0 16px;
+	}
+
+	&__intro {
+		color: var( --wc-review-order-fg-muted );
+	}
+
+	&__legend {
+		font-size: var( --wc-review-order-fs-meta );
+		color: var( --wc-review-order-fg-muted );
+		margin-bottom: 24px;
+	}
 
 	&__items {
 		list-style: none;
@@ -15,8 +57,7 @@
 
 	&__item {
 		padding: 24px 0;
-		border-top: 1px solid currentColor;
-		border-color: rgba(0, 0, 0, 0.1);
+		border-top: 1px solid rgba( 0, 0, 0, 0.1 );
 
 		&:first-child {
 			border-top: 0;
@@ -26,12 +67,18 @@
 
 	&__item-title {
 		margin: 0 0 12px;
-		font-weight: 600;
+		font-size: var( --wc-review-order-fs-h2 );
+		font-weight: 500;
+
+		a {
+			color: var( --wc-review-order-brand );
+			text-decoration: underline;
+		}
 	}
 
 	&__item-row {
 		display: flex;
-		gap: 24px;
+		gap: 28px;
 		align-items: flex-start;
 	}
 
@@ -52,7 +99,7 @@
 	&__item-review-label {
 		display: block;
 		margin: 0 0 4px;
-		font-weight: 500;
+		font-weight: 400;
 	}
 
 	&__item-review-textarea {
@@ -60,17 +107,83 @@
 		min-height: 96px;
 		resize: vertical;
 		font: inherit;
-		padding: 8px 12px;
+		font-size: var( --wc-review-order-fs-input );
+		padding: 12px;
 		box-sizing: border-box;
+		border: 1px solid var( --wc-review-order-stroke );
+		border-radius: var( --wc-review-order-radius );
+		color: var( --wc-review-order-fg );
+		background: #fff;
+
+		&::placeholder {
+			color: var( --wc-review-order-fg-subtle );
+			opacity: 1;
+		}
+
+		&:focus-visible {
+			outline: 2px solid var( --wc-review-order-brand );
+			outline-offset: 1px;
+		}
+	}
+
+	&__item-status {
+		margin: 8px 0 0;
+		font-size: var( --wc-review-order-fs-meta );
+
+		&--ok {
+			color: #008a20;
+		}
+
+		&--pending_moderation {
+			color: var( --wc-review-order-fg-muted );
+		}
+
+		&--error {
+			color: #a00;
+		}
 	}
 
 	&__actions {
 		margin-top: 24px;
 	}
 
-	&__submit[disabled] {
-		opacity: 0.5;
-		cursor: not-allowed;
+	&__submit {
+		min-height: 32px;
+		padding: 6px 12px;
+		border-radius: var( --wc-review-order-radius );
+		background: var( --wc-review-order-brand );
+		color: #fff;
+		border: 0;
+		font-weight: 500;
+		cursor: pointer;
+
+		&[disabled] {
+			background: #d0d0d0;
+			color: #6d6d6d;
+			cursor: not-allowed;
+		}
+
+		&:focus-visible {
+			outline: 2px solid var( --wc-review-order-fg );
+			outline-offset: 2px;
+		}
+	}
+
+	@media ( max-width: 600px ) {
+		&__item-row {
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		&__item-image {
+			flex: 0 0 auto;
+			max-width: 240px;
+			width: 100%;
+		}
+
+		&__submit {
+			width: 100%;
+		}
 	}
 }
 
@@ -89,7 +202,7 @@
 		padding: 0;
 		margin: -1px;
 		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
+		clip: rect( 0, 0, 0, 0 );
 		white-space: nowrap;
 		border: 0;
 	}
@@ -98,7 +211,7 @@
 		cursor: pointer;
 		display: inline-flex;
 		padding: 4px;
-		border-radius: 4px;
+		border-radius: var( --wc-review-order-radius, 2px );
 		color: currentColor;
 	}
 
@@ -111,11 +224,10 @@
 		transition: opacity 100ms ease-in-out;
 	}
 
-	// Light up every star up to (and including) the checked one. Stops at the
-	// next star whose input is checked; modern :has() walks the parent label.
+	// Light up every star up to (and including) the checked one.
 	@for $i from 1 through 5 {
-		&:has(.woocommerce-star-rating__input:checked[value="#{$i}"]) {
-			.woocommerce-star-rating__star:nth-of-type(-n + #{$i}) {
+		&:has( .woocommerce-star-rating__input:checked[value="#{$i}"] ) {
+			.woocommerce-star-rating__star:nth-of-type( -n + #{$i} ) {
 				.woocommerce-star-rating__icon {
 					opacity: 1;
 				}
@@ -124,46 +236,14 @@
 	}
 
 	// Hover preview: hovered star and every preceding sibling fill in.
-	@for $i from 1 through 5 {
-		&__star:nth-of-type(#{$i}):hover {
-			~ .woocommerce-star-rating__star .woocommerce-star-rating__icon {
-				opacity: 0.3;
-			}
-		}
-	}
-
-	&__star:hover ~ .woocommerce-star-rating__star {
-		.woocommerce-star-rating__icon {
-			opacity: 0.3;
-		}
-	}
-
-	&__star:hover .woocommerce-star-rating__icon {
-		opacity: 1;
-	}
-
-	// While hovering, light up every star to the LEFT of the hovered one.
 	&:hover {
 		.woocommerce-star-rating__star .woocommerce-star-rating__icon {
 			opacity: 0.3;
 		}
 
 		@for $i from 1 through 5 {
-			.woocommerce-star-rating__star:nth-of-type(#{$i}):hover {
-				~ .woocommerce-star-rating__star .woocommerce-star-rating__icon {
-					opacity: 0.3;
-				}
-
-				.woocommerce-star-rating__icon {
-					opacity: 1;
-				}
-			}
-		}
-
-		// Light up everything to the left of the hovered star using :has().
-		@for $i from 1 through 5 {
-			&:has(.woocommerce-star-rating__star:nth-of-type(#{$i}):hover) {
-				.woocommerce-star-rating__star:nth-of-type(-n + #{$i}) .woocommerce-star-rating__icon {
+			&:has( .woocommerce-star-rating__star:nth-of-type( #{$i} ):hover ) {
+				.woocommerce-star-rating__star:nth-of-type( -n + #{$i} ) .woocommerce-star-rating__icon {
 					opacity: 1;
 				}
 			}
@@ -171,15 +251,15 @@
 	}
 
 	// Visible focus ring on the wrapping label whenever its input is focused.
-	&__star:has(.woocommerce-star-rating__input:focus-visible) {
+	&__star:has( .woocommerce-star-rating__input:focus-visible ) {
 		outline: 2px solid currentColor;
 		outline-offset: 2px;
 	}
 
 	&__caption {
 		margin-left: 8px;
-		font-size: 12px;
-		color: currentColor;
+		font-size: var( --wc-review-order-fs-meta, 12px );
+		color: var( --wc-review-order-fg-subtle, currentColor );
 		min-height: 1em;
 		min-width: 4em;
 	}
