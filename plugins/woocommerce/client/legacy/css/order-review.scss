@@ -1,63 +1,23 @@
 /**
  * Review Order page styles.
  *
- * Figma source of truth: node 58:647 in
- * https://www.figma.com/design/03gyC2MaBJcvvXJozmxbcs/Review-request-email
- *
- * Tokens are defined locally on the page wrapper rather than promoted to the
- * shared `_variables.scss` because they are scoped to this feature.
+ * Intentionally minimal: the page reuses standard form controls, the
+ * `.button` class, and `.screen-reader-text` so the active theme drives
+ * typography, colors, and button styling. Only the interactive
+ * star-rating control and the per-item row layout need bespoke CSS.
  */
 
 .woocommerce-review-order {
-	// Figma tokens, scoped.
-	--wc-review-order-brand: #3858e9;
-	--wc-review-order-fg: #1e1e1e;
-	--wc-review-order-fg-muted: #4d4d4d;
-	--wc-review-order-fg-subtle: #6d6d6d;
-	--wc-review-order-stroke: #898989;
-	--wc-review-order-radius: 2px;
-
-	// Type scale.
-	--wc-review-order-fs-h1: 32px;
-	--wc-review-order-fs-h2: 20px;
-	--wc-review-order-fs-body: 15px;
-	--wc-review-order-fs-input: 13px;
-	--wc-review-order-fs-meta: 12px;
-
-	color: var( --wc-review-order-fg );
-	font-size: var( --wc-review-order-fs-body );
-	line-height: 1.5;
-
-	&__meta {
-		font-size: var( --wc-review-order-fs-meta );
-		color: var( --wc-review-order-fg-muted );
-	}
-
-	&__title {
-		font-size: var( --wc-review-order-fs-h1 );
-		line-height: 1.25;
-		margin: 0 0 16px;
-	}
-
-	&__intro {
-		color: var( --wc-review-order-fg-muted );
-	}
-
-	&__legend {
-		font-size: var( --wc-review-order-fs-meta );
-		color: var( --wc-review-order-fg-muted );
-		margin-bottom: 24px;
-	}
-
 	&__items {
 		list-style: none;
 		padding: 0;
-		margin: 0 0 24px;
+		margin: 0 0 1.5em;
 	}
 
 	&__item {
-		padding: 24px 0;
-		border-top: 1px solid rgba( 0, 0, 0, 0.1 );
+		padding: 1.5em 0;
+		border-top: 1px solid currentColor;
+		border-top-color: rgba(0, 0, 0, 0.1);
 
 		&:first-child {
 			border-top: 0;
@@ -65,20 +25,9 @@
 		}
 	}
 
-	&__item-title {
-		margin: 0 0 12px;
-		font-size: var( --wc-review-order-fs-h2 );
-		font-weight: 500;
-
-		a {
-			color: var( --wc-review-order-brand );
-			text-decoration: underline;
-		}
-	}
-
 	&__item-row {
 		display: flex;
-		gap: 28px;
+		gap: 1.5em;
 		align-items: flex-start;
 	}
 
@@ -92,50 +41,20 @@
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
-	}
-
-	&__item-rating-label,
-	&__item-review-label {
-		display: block;
-		margin: 0 0 4px;
-		font-weight: 400;
+		gap: 0.75em;
 	}
 
 	&__item-review-textarea {
 		width: 100%;
-		min-height: 96px;
+		min-height: 6em;
 		resize: vertical;
-		font: inherit;
-		font-size: var( --wc-review-order-fs-input );
-		padding: 12px;
-		box-sizing: border-box;
-		border: 1px solid var( --wc-review-order-stroke );
-		border-radius: var( --wc-review-order-radius );
-		color: var( --wc-review-order-fg );
-		background: #fff;
-
-		&::placeholder {
-			color: var( --wc-review-order-fg-subtle );
-			opacity: 1;
-		}
-
-		&:focus-visible {
-			outline: 2px solid var( --wc-review-order-brand );
-			outline-offset: 1px;
-		}
 	}
 
 	&__item-status {
-		margin: 8px 0 0;
-		font-size: var( --wc-review-order-fs-meta );
+		margin: 0.5em 0 0;
 
 		&--ok {
 			color: #008a20;
-		}
-
-		&--pending_moderation {
-			color: var( --wc-review-order-fg-muted );
 		}
 
 		&--error {
@@ -143,138 +62,20 @@
 		}
 	}
 
-	// Locked row variant (already reviewed).
-	&__item-reviewed-header {
-		display: flex;
-		gap: 8px;
-		align-items: center;
-		font-size: var( --wc-review-order-fs-meta );
-		color: var( --wc-review-order-fg-muted );
-	}
-
-	&__item-reviewed-badge {
-		display: inline-block;
-		padding: 2px 8px;
-		border-radius: var( --wc-review-order-radius );
-		background: rgba( 56, 88, 233, 0.08 );
-		color: var( --wc-review-order-brand );
-		font-weight: 500;
-	}
-
-	&__item-reviewed-rating {
-		margin: 0;
-		font-size: var( --wc-review-order-fs-body );
-
-		[aria-hidden] {
-			letter-spacing: 2px;
-		}
-	}
-
-	&__item-reviewed-label {
-		margin-left: 8px;
-		color: var( --wc-review-order-fg-muted );
-		font-size: var( --wc-review-order-fs-meta );
-	}
-
 	&__item-reviewed-text {
-		margin: 0;
-		padding: 0 0 0 12px;
-		border-left: 2px solid rgba( 0, 0, 0, 0.1 );
-		color: var( --wc-review-order-fg-muted );
+		margin: 0.5em 0 0;
+		padding: 0 0 0 0.75em;
+		border-left: 2px solid rgba(0, 0, 0, 0.1);
 	}
 
-	&__item-reviewed-link {
-		margin: 0;
-		font-size: var( --wc-review-order-fs-meta );
-
-		a {
-			color: var( --wc-review-order-brand );
-		}
-	}
-
-	// Empty-state thank-you variant.
-	&--empty {
-		padding: 24px 0;
-	}
-
-	&__empty-card {
-		max-width: 560px;
-		padding: 32px;
-		border: 1px solid rgba( 0, 0, 0, 0.1 );
-		border-radius: 4px;
-		background: #fff;
-	}
-
-	&__empty-title {
-		margin: 0 0 12px;
-		font-size: var( --wc-review-order-fs-h1 );
-		line-height: 1.25;
-	}
-
-	&__empty-body {
-		margin: 0 0 12px;
-		color: var( --wc-review-order-fg-muted );
-	}
-
-	&__empty-summary {
-		margin: 0 0 24px;
-		color: var( --wc-review-order-fg-muted );
-		font-size: var( --wc-review-order-fs-meta );
-	}
-
-	&__empty-actions a {
-		display: inline-block;
-		padding: 8px 16px;
-		border-radius: var( --wc-review-order-radius );
-		background: var( --wc-review-order-brand );
-		color: #fff;
-		text-decoration: none;
-
-		&:focus-visible {
-			outline: 2px solid var( --wc-review-order-fg );
-			outline-offset: 2px;
-		}
-	}
-
-	&__actions {
-		margin-top: 24px;
-	}
-
-	&__submit {
-		min-height: 32px;
-		padding: 6px 12px;
-		border-radius: var( --wc-review-order-radius );
-		background: var( --wc-review-order-brand );
-		color: #fff;
-		border: 0;
-		font-weight: 500;
-		cursor: pointer;
-
-		&[disabled] {
-			background: #d0d0d0;
-			color: #6d6d6d;
-			cursor: not-allowed;
-		}
-
-		&:focus-visible {
-			outline: 2px solid var( --wc-review-order-fg );
-			outline-offset: 2px;
-		}
-	}
-
-	@media ( max-width: 600px ) {
+	@media (max-width: 600px) {
 		&__item-row {
 			flex-direction: column;
-			gap: 16px;
 		}
 
 		&__item-image {
 			flex: 0 0 auto;
 			max-width: 240px;
-			width: 100%;
-		}
-
-		&__submit {
 			width: 100%;
 		}
 	}
@@ -295,7 +96,7 @@
 		padding: 0;
 		margin: -1px;
 		overflow: hidden;
-		clip: rect( 0, 0, 0, 0 );
+		clip: rect(0, 0, 0, 0);
 		white-space: nowrap;
 		border: 0;
 	}
@@ -304,55 +105,47 @@
 		cursor: pointer;
 		display: inline-flex;
 		padding: 4px;
-		border-radius: var( --wc-review-order-radius, 2px );
 		color: currentColor;
 	}
 
 	&__icon {
 		display: block;
-		width: 24px;
-		height: 24px;
+		width: 1.5em;
+		height: 1.5em;
 		fill: currentColor;
 		opacity: 0.3;
 		transition: opacity 100ms ease-in-out;
 	}
 
-	// Light up every star up to (and including) the checked one.
 	@for $i from 1 through 5 {
-		&:has( .woocommerce-star-rating__input:checked[value="#{$i}"] ) {
-			.woocommerce-star-rating__star:nth-of-type( -n + #{$i} ) {
-				.woocommerce-star-rating__icon {
-					opacity: 1;
-				}
+		&:has(.woocommerce-star-rating__input:checked[value="#{$i}"]) {
+			.woocommerce-star-rating__star:nth-of-type(-n + #{$i}) .woocommerce-star-rating__icon {
+				opacity: 1;
 			}
 		}
 	}
 
-	// Hover preview: hovered star and every preceding sibling fill in.
 	&:hover {
 		.woocommerce-star-rating__star .woocommerce-star-rating__icon {
 			opacity: 0.3;
 		}
 
 		@for $i from 1 through 5 {
-			&:has( .woocommerce-star-rating__star:nth-of-type( #{$i} ):hover ) {
-				.woocommerce-star-rating__star:nth-of-type( -n + #{$i} ) .woocommerce-star-rating__icon {
+			&:has(.woocommerce-star-rating__star:nth-of-type(#{$i}):hover) {
+				.woocommerce-star-rating__star:nth-of-type(-n + #{$i}) .woocommerce-star-rating__icon {
 					opacity: 1;
 				}
 			}
 		}
 	}
 
-	// Visible focus ring on the wrapping label whenever its input is focused.
-	&__star:has( .woocommerce-star-rating__input:focus-visible ) {
+	&__star:has(.woocommerce-star-rating__input:focus-visible) {
 		outline: 2px solid currentColor;
 		outline-offset: 2px;
 	}
 
 	&__caption {
-		margin-left: 8px;
-		font-size: var( --wc-review-order-fs-meta, 12px );
-		color: var( --wc-review-order-fg-subtle, currentColor );
+		margin-left: 0.5em;
 		min-height: 1em;
 		min-width: 4em;
 	}
