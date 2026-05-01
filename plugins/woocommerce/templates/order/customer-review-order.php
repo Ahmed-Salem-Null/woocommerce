@@ -127,8 +127,9 @@ $items = apply_filters( 'woocommerce_review_order_eligible_items', $order->get_i
 							<p id="<?php echo esc_attr( $rating_label_id ); ?>" class="woocommerce-review-order__item-rating-label">
 								<?php
 								printf(
-									'%s <span class="required" aria-hidden="true">*</span>',
-									esc_html__( 'Your rating', 'woocommerce' )
+									'%1$s <span class="required" aria-hidden="true">*</span><span class="screen-reader-text"> %2$s</span>',
+									esc_html__( 'Your rating', 'woocommerce' ),
+									esc_html__( 'Required', 'woocommerce' )
 								);
 								?>
 							</p>
