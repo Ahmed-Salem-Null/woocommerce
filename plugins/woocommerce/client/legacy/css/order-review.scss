@@ -192,6 +192,50 @@
 		}
 	}
 
+	// Empty-state thank-you variant.
+	&--empty {
+		padding: 24px 0;
+	}
+
+	&__empty-card {
+		max-width: 560px;
+		padding: 32px;
+		border: 1px solid rgba( 0, 0, 0, 0.1 );
+		border-radius: 4px;
+		background: #fff;
+	}
+
+	&__empty-title {
+		margin: 0 0 12px;
+		font-size: var( --wc-review-order-fs-h1 );
+		line-height: 1.25;
+	}
+
+	&__empty-body {
+		margin: 0 0 12px;
+		color: var( --wc-review-order-fg-muted );
+	}
+
+	&__empty-summary {
+		margin: 0 0 24px;
+		color: var( --wc-review-order-fg-muted );
+		font-size: var( --wc-review-order-fs-meta );
+	}
+
+	&__empty-actions a {
+		display: inline-block;
+		padding: 8px 16px;
+		border-radius: var( --wc-review-order-radius );
+		background: var( --wc-review-order-brand );
+		color: #fff;
+		text-decoration: none;
+
+		&:focus-visible {
+			outline: 2px solid var( --wc-review-order-fg );
+			outline-offset: 2px;
+		}
+	}
+
 	&__actions {
 		margin-top: 24px;
 	}

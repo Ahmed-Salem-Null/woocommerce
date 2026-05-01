@@ -69,6 +69,79 @@ $meta_parts = array_filter(
  */
 $items = apply_filters( 'woocommerce_review_order_eligible_items', $order->get_items(), $order );
 
+// Pre-compute one decision per item so we know whether the form has any
+// actionable rows or whether to fall through to the empty-state thank-you.
+$decisions = array();
+foreach ( $items as $item ) {
+	if ( ! $item instanceof WC_Order_Item_Product ) {
+		continue;
+	}
+	$product = $item->get_product();
+	if ( ! $product instanceof WC_Product ) {
+		continue;
+	}
+
+	$decision = \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::describe( $item, $order );
+	if ( \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::STATUS_SKIP === $decision['status'] ) {
+		continue;
+	}
+
+	$decisions[] = array(
+		'item'     => $item,
+		'product'  => $product,
+		'decision' => $decision,
+	);
+}
+
+$has_form_rows = false;
+foreach ( $decisions as $entry ) {
+	if ( \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::STATUS_FORM === $entry['decision']['status'] ) {
+		$has_form_rows = true;
+		break;
+	}
+}
+
+// Empty-state: every eligible item is already reviewed (or skipped).
+if ( ! $has_form_rows ) {
+	$customer_email = $order->get_billing_email();
+	$reviewed_count = 0;
+	$rating_total   = 0;
+	$rating_n       = 0;
+
+	if ( '' !== $customer_email ) {
+		foreach ( $decisions as $entry ) {
+			$existing_review = $entry['decision']['comment'] ?? null;
+			if ( $existing_review instanceof WP_Comment ) {
+				++$reviewed_count;
+				$rating = (int) get_comment_meta( (int) $existing_review->comment_ID, 'rating', true );
+				if ( $rating > 0 ) {
+					$rating_total += $rating;
+					++$rating_n;
+				}
+			}
+		}
+	}
+
+	$average_rating = $rating_n > 0 ? round( $rating_total / $rating_n, 1 ) : 0.0;
+
+	// Mark the order as fully reviewed if the submission handler hasn't already.
+	$completed_meta_key = \Automattic\WooCommerce\Internal\OrderReviews\SubmissionHandler::COMPLETED_META_KEY;
+	if ( $reviewed_count > 0 && empty( $order->get_meta( $completed_meta_key ) ) ) {
+		$order->update_meta_data( $completed_meta_key, (string) time() );
+		$order->save();
+	}
+
+	wc_get_template(
+		'order/customer-review-order-empty.php',
+		array(
+			'order'          => $order,
+			'reviewed_count' => $reviewed_count,
+			'average_rating' => $average_rating,
+		)
+	);
+	return;
+}//end if
+
 // Read the order key from the URL so the form can echo it back when posted.
 // The Endpoint handler has already validated it before this template runs.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only landing page; the order key is the auth.
@@ -108,20 +181,10 @@ $order_key = is_string( $raw_key ) ? $raw_key : '';
 			<ul class="woocommerce-review-order__items">
 				<?php
 				$row_index = 0;
-				foreach ( $items as $item ) {
-					if ( ! $item instanceof WC_Order_Item_Product ) {
-						continue;
-					}
-					$product = $item->get_product();
-					if ( ! $product instanceof WC_Product ) {
-						continue;
-					}
-
-					$decision = \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::describe( $item, $order );
-
-					if ( \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::STATUS_SKIP === $decision['status'] ) {
-						continue;
-					}
+				foreach ( $decisions as $entry ) {
+					$item     = $entry['item'];
+					$product  = $entry['product'];
+					$decision = $entry['decision'];
 
 					if ( \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::STATUS_REVIEWED === $decision['status'] ) {
 						wc_get_template(
