@@ -37,8 +37,14 @@ class OrderReviews {
 	 * @param SubmissionHandler $submission Handles the AJAX form submission.
 	 */
 	final public function init( Scheduler $scheduler, Endpoint $endpoint, SubmissionHandler $submission ): void {
-		// No body needed: the container has already constructed and
-		// initialised every arg, so their hooks are live by this point.
+		// Container has already constructed and initialised every arg, so their hooks are live by this point.
 		unset( $scheduler, $endpoint, $submission );
+
+		add_filter(
+			'woocommerce_review_order_eligible_items',
+			array( ItemEligibility::class, 'exclude_fully_refunded_items' ),
+			10,
+			2
+		);
 	}
 }
