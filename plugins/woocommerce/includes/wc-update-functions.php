@@ -3496,3 +3496,15 @@ function wc_update_1080_slim_orders_meta_key_index(): void {
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$wpdb->query( "ALTER TABLE {$table_name} DROP INDEX {$index_name}, ADD INDEX {$index_name} (meta_key(100))" );
 }
+
+/**
+ * Remove the option woocommerce_task_list_reminder_bar_hidden.
+ * The task list reminder bar was removed in 10.8.0; this option is no longer used.
+ *
+ * @since 10.8.0
+ *
+ * @return void
+ */
+function wc_update_1080_remove_task_list_reminder_bar_hidden_option() {
+	delete_option( 'woocommerce_task_list_reminder_bar_hidden' );
+}
