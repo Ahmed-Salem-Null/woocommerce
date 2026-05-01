@@ -106,7 +106,8 @@ class SubmissionHandlerTest extends WC_Unit_Test_Case {
 		try {
 			$handler->handle();
 		} catch ( WPAjaxDieContinueException $e ) {
-			// Expected — wp_send_json_* calls wp_die().
+			// wp_send_json_* always calls wp_die(); this exception is the expected exit.
+			unset( $e );
 		}
 		$body = (string) ob_get_clean();
 

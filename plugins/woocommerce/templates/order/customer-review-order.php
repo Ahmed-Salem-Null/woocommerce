@@ -117,6 +117,25 @@ $order_key = is_string( $raw_key ) ? $raw_key : '';
 						continue;
 					}
 
+					$decision = \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::describe( $item, $order );
+
+					if ( \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::STATUS_SKIP === $decision['status'] ) {
+						continue;
+					}
+
+					if ( \Automattic\WooCommerce\Internal\OrderReviews\ItemEligibility::STATUS_REVIEWED === $decision['status'] ) {
+						wc_get_template(
+							'order/customer-review-order-row-reviewed.php',
+							array(
+								'item'    => $item,
+								'product' => $product,
+								'order'   => $order,
+								'review'  => $decision['comment'],
+							)
+						);
+						continue;
+					}
+
 					wc_get_template(
 						'order/customer-review-order-row.php',
 						array(

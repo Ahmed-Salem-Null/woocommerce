@@ -143,6 +143,55 @@
 		}
 	}
 
+	// Locked row variant (already reviewed).
+	&__item-reviewed-header {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		font-size: var( --wc-review-order-fs-meta );
+		color: var( --wc-review-order-fg-muted );
+	}
+
+	&__item-reviewed-badge {
+		display: inline-block;
+		padding: 2px 8px;
+		border-radius: var( --wc-review-order-radius );
+		background: rgba( 56, 88, 233, 0.08 );
+		color: var( --wc-review-order-brand );
+		font-weight: 500;
+	}
+
+	&__item-reviewed-rating {
+		margin: 0;
+		font-size: var( --wc-review-order-fs-body );
+
+		[aria-hidden] {
+			letter-spacing: 2px;
+		}
+	}
+
+	&__item-reviewed-label {
+		margin-left: 8px;
+		color: var( --wc-review-order-fg-muted );
+		font-size: var( --wc-review-order-fs-meta );
+	}
+
+	&__item-reviewed-text {
+		margin: 0;
+		padding: 0 0 0 12px;
+		border-left: 2px solid rgba( 0, 0, 0, 0.1 );
+		color: var( --wc-review-order-fg-muted );
+	}
+
+	&__item-reviewed-link {
+		margin: 0;
+		font-size: var( --wc-review-order-fs-meta );
+
+		a {
+			color: var( --wc-review-order-brand );
+		}
+	}
+
 	&__actions {
 		margin-top: 24px;
 	}

@@ -51,13 +51,15 @@ class SubmissionHandler {
 	 * Sends a JSON response and exits.
 	 */
 	public function handle(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce is checked below.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce is verified below.
 		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
-		$raw_key  = isset( $_POST['key'] ) && is_string( $_POST['key'] ) ? wp_unslash( $_POST['key'] ) : '';
+		$raw_key  = isset( $_POST['key'] ) && is_string( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
 		$cleaned  = wc_clean( $raw_key );
 		$key      = is_string( $cleaned ) ? $cleaned : '';
-		$nonce    = isset( $_POST['_wcnonce'] ) && is_string( $_POST['_wcnonce'] ) ? wp_unslash( $_POST['_wcnonce'] ) : '';
-		$rows_in  = isset( $_POST['reviews'] ) && is_array( $_POST['reviews'] ) ? wp_unslash( $_POST['reviews'] ) : array();
+		$nonce    = isset( $_POST['_wcnonce'] ) && is_string( $_POST['_wcnonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_wcnonce'] ) ) : '';
+		// Per-field sanitization happens in process_rows() below.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$rows_in = isset( $_POST['reviews'] ) && is_array( $_POST['reviews'] ) ? (array) wp_unslash( $_POST['reviews'] ) : array();
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( ! is_string( $nonce ) || ! wp_verify_nonce( $nonce, self::ACTION ) ) {
@@ -103,13 +105,13 @@ class SubmissionHandler {
 	 * @return array<int, array{product_id:int, status:string, comment_id?:int, error?:string}>
 	 */
 	private function process_rows( WC_Order $order, array $rows_in ): array {
-		$results       = array();
-		$item_index    = $this->index_order_items( $order );
-		$author_name   = trim( $order->get_billing_first_name() . ' ' . $order->get_billing_last_name() );
-		$author_email  = $order->get_billing_email();
-		$author_ip     = $order->get_customer_ip_address();
-		$author_agent  = $order->get_customer_user_agent();
-		$require_mod   = (bool) get_option( 'comment_moderation' );
+		$results      = array();
+		$item_index   = $this->index_order_items( $order );
+		$author_name  = trim( $order->get_billing_first_name() . ' ' . $order->get_billing_last_name() );
+		$author_email = $order->get_billing_email();
+		$author_ip    = $order->get_customer_ip_address();
+		$author_agent = $order->get_customer_user_agent();
+		$require_mod  = (bool) get_option( 'comment_moderation' );
 
 		foreach ( $rows_in as $row_index => $row ) {
 			$row_index = (int) $row_index;
@@ -123,7 +125,9 @@ class SubmissionHandler {
 
 			$product_id    = isset( $row['product_id'] ) ? absint( $row['product_id'] ) : 0;
 			$order_item_id = isset( $row['order_item_id'] ) ? absint( $row['order_item_id'] ) : 0;
-			$text          = isset( $row['text'] ) && is_string( $row['text'] ) ? trim( wp_kses_post( wp_unslash( $row['text'] ) ) ) : '';
+			$text          = isset( $row['text'] ) && is_string( $row['text'] )
+				? trim( wp_kses_post( wp_unslash( $row['text'] ) ) )
+				: '';
 
 			$result = array(
 				'product_id' => $product_id,
@@ -131,21 +135,21 @@ class SubmissionHandler {
 			);
 
 			if ( ! $product_id || ! $order_item_id || ! isset( $item_index[ $order_item_id ] ) ) {
-				$result['error'] = 'invalid_row';
+				$result['error']       = 'invalid_row';
 				$results[ $row_index ] = $result;
 				continue;
 			}
 
 			$item = $item_index[ $order_item_id ];
 			if ( $item->get_product_id() !== $product_id ) {
-				$result['error'] = 'product_mismatch';
+				$result['error']       = 'product_mismatch';
 				$results[ $row_index ] = $result;
 				continue;
 			}
 
 			$comment_data = array(
 				'comment_post_ID'      => $product_id,
-				'comment_author'       => $author_name !== '' ? $author_name : __( 'Anonymous', 'woocommerce' ),
+				'comment_author'       => '' !== $author_name ? $author_name : __( 'Anonymous', 'woocommerce' ),
 				'comment_author_email' => $author_email,
 				'comment_author_IP'    => $author_ip,
 				'comment_agent'        => $author_agent,
@@ -157,7 +161,7 @@ class SubmissionHandler {
 
 			$comment_id = wp_insert_comment( wp_slash( $comment_data ) );
 			if ( ! $comment_id ) {
-				$result['error'] = 'insert_failed';
+				$result['error']       = 'insert_failed';
 				$results[ $row_index ] = $result;
 				continue;
 			}
@@ -165,10 +169,10 @@ class SubmissionHandler {
 			add_comment_meta( $comment_id, 'rating', $rating, true );
 			add_comment_meta( $comment_id, 'verified', 1, true );
 
-			$result['comment_id'] = (int) $comment_id;
-			$result['status']     = $require_mod ? 'pending_moderation' : 'ok';
+			$result['comment_id']  = (int) $comment_id;
+			$result['status']      = $require_mod ? 'pending_moderation' : 'ok';
 			$results[ $row_index ] = $result;
-		}
+		}//end foreach
 
 		return $results;
 	}
@@ -207,7 +211,7 @@ class SubmissionHandler {
 			if ( 0 === (int) $comments ) {
 				return;
 			}
-		}
+		}//end foreach
 
 		$order->update_meta_data( self::COMPLETED_META_KEY, (string) time() );
 		$order->save();
